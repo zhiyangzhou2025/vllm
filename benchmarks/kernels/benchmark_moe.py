@@ -760,6 +760,14 @@ def get_num_experts(config):
     raise AttributeError(f"{type(config).__name__} has no expert-count field")
 
 
+def get_moe_intermediate_size(config):
+    if hasattr(config, "moe_intermediate_size"):
+        return config.moe_intermediate_size
+    if hasattr(config, "intermediate_size"):
+        return config.intermediate_size
+    raise AttributeError(f"{type(config).__name__} has no intermediate-size field")
+
+
 def get_model_params(config):
     architectures = getattr(config, "architectures", None) or [type(config).__name__]
     architecture = architectures[0]
@@ -827,7 +835,7 @@ def get_model_params(config):
         # Default: Mixtral.
         E = get_num_experts(config)
         topk = config.num_experts_per_tok
-        intermediate_size = config.intermediate_size
+        intermediate_size = get_moe_intermediate_size(config)
         hidden_size = config.hidden_size
     return E, topk, intermediate_size, hidden_size
 
