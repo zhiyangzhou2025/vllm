@@ -650,6 +650,10 @@ class BenchmarkWorker:
                 except triton.runtime.autotuner.OutOfResources:
                     # Some configurations may be invalid and fail to compile.
                     continue
+                except RuntimeError as exc:
+                    if "PassManager::run failed" in str(exc):
+                        continue
+                    raise
 
                 if kernel_time < best_time:
                     best_time = kernel_time
@@ -874,7 +878,8 @@ def main(args: argparse.Namespace):
 
     config = get_config(model=args.model, trust_remote_code=args.trust_remote_code)
     if args.model_prefix:
-        config = getattr(config, args.model_prefix)
+        for attr in args.model_prefix.split("."):
+            config = getattr(config, attr)
     E, topk, intermediate_size, hidden_size = get_model_params(config)
     enable_ep = bool(args.enable_expert_parallel)
     if enable_ep:
