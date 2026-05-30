@@ -752,6 +752,14 @@ def get_weight_block_size_safety(config, default_value=None):
     return default_value
 
 
+def get_num_experts(config):
+    if hasattr(config, "num_experts"):
+        return config.num_experts
+    if hasattr(config, "num_local_experts"):
+        return config.num_local_experts
+    raise AttributeError(f"{type(config).__name__} has no expert-count field")
+
+
 def get_model_params(config):
     architectures = getattr(config, "architectures", None) or [type(config).__name__]
     architecture = architectures[0]
@@ -805,7 +813,7 @@ def get_model_params(config):
         intermediate_size = config.moe_intermediate_size[0]
         hidden_size = config.hidden_size
     elif architecture == "Qwen3OmniMoeForConditionalGeneration":
-        E = config.thinker_config.text_config.num_experts
+        E = get_num_experts(config.thinker_config.text_config)
         topk = config.thinker_config.text_config.num_experts_per_tok
         intermediate_size = config.thinker_config.text_config.moe_intermediate_size
         hidden_size = config.thinker_config.text_config.hidden_size
@@ -817,7 +825,7 @@ def get_model_params(config):
         # Support for llama4
         config = config.get_text_config()
         # Default: Mixtral.
-        E = config.num_local_experts
+        E = get_num_experts(config)
         topk = config.num_experts_per_tok
         intermediate_size = config.intermediate_size
         hidden_size = config.hidden_size
